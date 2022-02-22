@@ -1,0 +1,109 @@
+//
+//  ContentView.swift
+//  DadJokes
+//
+//  Created by Russell Gordon on 2022-02-21.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    
+    //MARK: Stored Properties
+    //Holds the current joke
+   @State var currentJoke: DadJoke = DadJoke(id: "",
+                                       joke: "",
+                                       status: 0)
+    
+    
+    //MARK: Computed Properties
+    var body: some View {
+        VStack {
+            
+            Text(currentJoke.joke)
+                .multilineTextAlignment(.leading)
+                .padding(30)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.primary, lineWidth: 4)
+                )
+                .padding(10)
+            
+            Image(systemName: "heart.circle")
+                .resizable()
+                .frame(width: 40, height: 40)
+            
+            Button(action: {
+                print("Button was pressed")
+            }, label: {
+                Text("Another one!")
+            })
+                .buttonStyle(.bordered)
+            
+            HStack {
+                Text("Favourites")
+                    .bold()
+                    .font(.title3)
+                
+                Spacer()
+            }
+            
+            List {
+                Text("Which side of the chicken has more feathers? The outside.")
+                Text("Why did the Clydesdale give the pony a glass of water? Because he was a little horse!")
+                Text("The great thing about stationery shops is they're always in the same place...")
+            }
+            
+            Spacer()
+                        
+        }
+        //when the app opens get a new joke from the web sevice
+        .task {
+            
+            //Assemble the url that points to the end point
+            let url = URL(string: "https://icanhazdadjoke.com/")!
+            
+            //Define the type of data we want from the endpoint
+            //Configure the request to the web site
+            var request = URLRequest(url: url)
+            //Ask for JSON data
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            
+            //Start a session to interact (talk with) the end point
+            let urlSession = URLSession.shared
+            // Try to fetch a new joke
+            // It might not work, so we use a do-catch block
+            do {
+                // Get the raw data from the end point
+                let (data, _) = try await urlSession.data(for: request)
+                
+                //Attempt to decode the raw data into a Swift structure
+                //Takes what is in 'data' and tries to put it into 'currentJoke'
+                // DATA TYPE TO DECODE
+                //      |
+                //      V
+                currentJoke = try JSONDecoder().decode(DadJoke.self, from: data)
+                
+                
+            } catch  {
+                print("Could not retrieve or decode the JSON from endpoint.")
+                //Print the contents of the "error" constant that the do-catch block
+                //populates
+                print(error) 
+            }
+            
+            
+        }
+        .navigationTitle("icanhazdadjoke?")
+        .padding()
+    }
+    
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            ContentView()
+        }
+    }
+}
